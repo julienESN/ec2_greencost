@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 print(matplotlib.__version__)
 import numpy as np
+import os
 
 # 1. Charger les données
-df = pd.read_csv("simulated_ec2.csv")
+df = pd.read_csv("data/simulated_ec2.csv")
 
 # 2. Afficher un aperçu rapide
 print("🔍 Aperçu des données :")
@@ -36,6 +37,14 @@ if 'co2_cost' in df.columns:
     avg_co2cost_by_model = df.groupby('pricing_model')['co2_cost'].mean()
     print("\n💲 Coût carbone moyen ($) par pricing model :")
     print(avg_co2cost_by_model)
+
+dir_path = "plots"
+
+if os.path.isdir(dir_path):
+    print(f"{dir_path} exists")
+else:
+    os.makedirs(dir_path)
+    print(f"Created {dir_path} directory")
 
 # ------------------------------------------------------------------
 # 🎨 Partie Visualisation 1: Coût vs Émission CO₂
