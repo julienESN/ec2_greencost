@@ -1,5 +1,8 @@
 import random
 import csv
+import os
+
+
 
 # 1. Type d’instances EC2 et leur coût horaire (USD)
 instance_types = {
@@ -35,11 +38,19 @@ base_power_map = {
     'r5.2xlarge': 120
 }
 
+dir_path = "data"
+
+if os.path.isdir(dir_path):
+    print(f"{dir_path} exists")
+else:
+    os.makedirs(dir_path)
+    print(f"Created {dir_path} directory")
+
 def generate_instances(n=10):
     """
     Génère n instances EC2 simulées avec coût AWS + coût carbone.
     """
-    # -- Hypothèse : 80$/tonne de CO2 => 0.08$/kg
+    # — Hypothèse : 80$/tonne de CO2 => 0.08$/kg
     co2_price_per_kg = 0.08
 
     instances = []
@@ -87,7 +98,7 @@ def generate_instances(n=10):
         })
     return instances
 
-def export_to_csv(instances, filename='simulated_ec2.csv'):
+def export_to_csv(instances, filename='data/simulated_ec2.csv'):
     """
     Exporte la liste de dictionnaires en un fichier CSV.
     """
