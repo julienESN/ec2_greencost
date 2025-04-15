@@ -6,6 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="b1d3c4eb-56a7-4d01-887c-aaef0c4bc434" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< HEAD
+=======
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+>>>>>>> e07504c (Remove data/ and plots from repo, now generated automatically)
       <change beforePath="$PROJECT_DIR$/analyse_ec2.py" beforeDir="false" afterPath="$PROJECT_DIR$/analyse_ec2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plots/bar_cost_co2_by_region.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/plots/boxplot_cost_by_region.png" beforeDir="false" />
@@ -14,6 +18,10 @@
       <change beforePath="$PROJECT_DIR$/plots/plot_cost_vs_co2.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/plots/plot_cost_vs_co2_enhanced.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/plots/plot_cost_vs_co2cost.png" beforeDir="false" />
+<<<<<<< HEAD
+=======
+      <change beforePath="$PROJECT_DIR$/simulate_ec2.py" beforeDir="false" afterPath="$PROJECT_DIR$/simulate_ec2.py" afterDir="false" />
+>>>>>>> e07504c (Remove data/ and plots from repo, now generated automatically)
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +79,11 @@
       <workItem from="1744721932578" duration="10000" />
       <workItem from="1744722293537" duration="3423000" />
       <workItem from="1744725797947" duration="583000" />
+<<<<<<< HEAD
       <workItem from="1744747249462" duration="612000" />
+=======
+      <workItem from="1744747249462" duration="1343000" />
+>>>>>>> e07504c (Remove data/ and plots from repo, now generated automatically)
     </task>
     <servers />
   </component>
@@ -83,14 +95,30 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="3-issue-3-créer-le-dossier-plots-automatiquement" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
     </option>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+<<<<<<< HEAD
     <SUITE FILE_PATH="coverage/ec2_greencost$simulate_ec2.coverage" NAME="simulate_ec2 Coverage Results" MODIFIED="1744747810007" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+=======
+    <SUITE FILE_PATH="coverage/ec2_greencost$simulate_ec2.coverage" NAME="simulate_ec2 Coverage Results" MODIFIED="1744748172694" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+>>>>>>> e07504c (Remove data/ and plots from repo, now generated automatically)
     <SUITE FILE_PATH="coverage/ec2_greencost$analyse_ec2.coverage" NAME="analyse_ec2 Coverage Results" MODIFIED="1744747823290" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
