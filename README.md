@@ -140,6 +140,6 @@ Affiche la variabilité et les outliers de chaque région.
 
 ## 📄 Licence
 
-Projet open-source (MIT, Apache ou autre licence selon tes préférences).
+Projet open-source
 
 ---
