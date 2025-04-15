@@ -1,0 +1,12 @@
+# Ignorer le dossier data
+data/
+
+# Ignorer le dossier plots
+plots/
+
+# Ignorer le dossier .idea/ (PyCharm)
+.idea/
+
+# Ignorer d'autres fichiers sensibles
+*.log
+*.pyc
