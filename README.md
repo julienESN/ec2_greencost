@@ -43,7 +43,7 @@ flowchart LR
 2. Installer les dépendances (pandas, matplotlib, etc.) :
 
 ```bash
-pip install pandas matplotlib numpy
+pip install -r requirements.txt
 ```
 
 ### Étapes
