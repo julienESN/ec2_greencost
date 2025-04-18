@@ -1,267 +1,244 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib
-print(matplotlib.__version__)
-import numpy as np
+#!/usr/bin/env python3
+"""analyse_ec2.py
+Analyse un fichier CSV simulant des instances EC2 : statistiques financières et carbone + visualisations.
+
+Usage :
+  python analyse_ec2.py [-i ec2.csv] [-d plots] [--no-display]
+
+Options :
+  -i, --input FILE     Chemin du CSV d'entrée. [def. : data/simulated_ec2.csv]
+  -d, --outdir DIR     Dossier où sauver les graphiques. [def. : plots]
+  --no-display         Génère les graphes sans les afficher (backend Agg).
+"""
+
+from __future__ import annotations
+
+import argparse
 import os
+from pathlib import Path
 
-# 1. Charger les données
-df = pd.read_csv("data/simulated_ec2.csv")
+# ────────────────────────────
+# ░░ 1. Arguments CLI ░░
+# ────────────────────────────
 
-# 2. Afficher un aperçu rapide
-print("🔍 Aperçu des données :")
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Analyse un CSV d'instances EC2 et produit des graphes/statistiques.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "-i",
+        "--input",
+        default="data/simulated_ec2.csv",
+        help="Chemin du CSV d'entrée.",
+    )
+    parser.add_argument(
+        "-d",
+        "--outdir",
+        default="plots",
+        help="Dossier de sortie pour les graphiques.",
+    )
+    parser.add_argument(
+        "--no-display",
+        action="store_true",
+        help="N'affiche pas les graphiques (backend Agg).",
+    )
+    return parser.parse_args()
+
+
+ARGS = parse_args()
+
+# Placer le backend *avant* d'importer pyplot si headless
+import matplotlib  # noqa: E402  # isort: skip
+
+if ARGS.no_display:
+    matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt  # noqa: E402  # isort: skip
+import numpy as np  # noqa: E402  # isort: skip
+import pandas as pd  # noqa: E402  # isort: skip
+
+print(f"Matplotlib backend : {matplotlib.get_backend()}")
+
+# ────────────────────────────
+# ░░ 2. Chargement des données ░░
+# ────────────────────────────
+
+input_path = Path(ARGS.input)
+if not input_path.exists():
+    raise FileNotFoundError(f"Le fichier d'entrée '{input_path}' est introuvable.")
+
+df = pd.read_csv(input_path)
+
+# ────────────────────────────
+# ░░ 3. Analyse descriptive ░░
+# ────────────────────────────
+
+print("\n🔍 Aperçu des données :")
 print(df.head())
 
-# 2. bis Vérifier la présence de co2_cost
-if 'co2_cost' not in df.columns:
-    print("\n⚠️ La colonne 'co2_cost' n'existe pas dans le CSV. Assure-toi d'avoir mis à jour ton script de simulation.")
+if "co2_cost" not in df.columns:
+    print("\n⚠️  La colonne 'co2_cost' n'existe pas dans le CSV. Assure‑toi d'avoir mis à jour ton script de simulation.")
 else:
-    print("\n🔎 Aperçu de la colonne 'co2_cost':")
-    print(df['co2_cost'].describe())
+    print("\n🔎 Aperçu de la colonne 'co2_cost' :")
+    print(df["co2_cost"].describe())
 
-# 3. Quelques stats basées sur le 'pricing_model'
-model_counts = df['pricing_model'].value_counts()
-print("\n📊 Instances par pricing model :")
+model_counts = df["pricing_model"].value_counts()
+print("\n📊 Instances par pricing model :")
 print(model_counts)
 
-avg_cost_by_model = df.groupby('pricing_model')['total_cost'].mean()
-print("\n💰 Coût moyen ($) par pricing model :")
+avg_cost_by_model = df.groupby("pricing_model")["total_cost"].mean()
+print("\n💰 Coût moyen ($) par pricing model :")
 print(avg_cost_by_model)
 
-avg_co2_by_model = df.groupby('pricing_model')['co2_kg'].mean()
-print("\n🌱 Émissions CO₂ moyennes (kg) par pricing model :")
+avg_co2_by_model = df.groupby("pricing_model")["co2_kg"].mean()
+print("\n🌱 Émissions CO₂ moyennes (kg) par pricing model :")
 print(avg_co2_by_model)
 
-# 3. Bis. Si co2_cost est disponible, affichons des stats dessus
-if 'co2_cost' in df.columns:
-    avg_co2cost_by_model = df.groupby('pricing_model')['co2_cost'].mean()
-    print("\n💲 Coût carbone moyen ($) par pricing model :")
+if "co2_cost" in df.columns:
+    avg_co2cost_by_model = df.groupby("pricing_model")["co2_cost"].mean()
+    print("\n💲 Coût carbone moyen ($) par pricing model :")
     print(avg_co2cost_by_model)
 
-dir_path = "plots"
+# ────────────────────────────
+# ░░ 4. Préparation dossier de sortie ░░
+# ────────────────────────────
 
-if os.path.isdir(dir_path):
-    print(f"{dir_path} exists")
-else:
-    os.makedirs(dir_path)
-    print(f"Created {dir_path} directory")
+outdir = Path(ARGS.outdir)
+outdir.mkdir(parents=True, exist_ok=True)
+print(f"\n📂 Graphiques sauvegardés dans : {outdir.resolve()}")
 
-# ------------------------------------------------------------------
-# 🎨 Partie Visualisation 1: Coût vs Émission CO₂
-# ------------------------------------------------------------------
-regions = df['region'].unique()
+# Palette et mappings
+regions = df["region"].unique()
 colors = ["red", "blue", "green", "orange"]
 region_color_map = dict(zip(regions, colors))
 
 pricing_shapes = {
-    'on_demand': 'o',  # cercle
-    'reserved': 's',   # carré
-    'spot': 'X'        # croix (ou x)
+    "on_demand": "o",  # cercle
+    "reserved": "s",  # carré
+    "spot": "X",  # croix
 }
 
+# Helper pour show/save/close
+
+def finalize(fig_name: str):
+    plt.tight_layout()
+    plt.savefig(outdir / fig_name, dpi=300)
+    if not ARGS.no_display:
+        plt.show()
+    plt.close()
+
+# ────────────────────────────
+# ░░ 5. Visualisation 1 : Coût vs CO₂ ░░
+# ────────────────────────────
+
 plt.figure(figsize=(12, 7))
-
 for _, row in df.iterrows():
-    region_color = region_color_map[row['region']]
-    shape = pricing_shapes[row['pricing_model']]
     plt.scatter(
-        row['total_cost'],
-        row['co2_kg'],
-        color=region_color,
-        marker=shape,
+        row["total_cost"],
+        row["co2_kg"],
+        color=region_color_map[row["region"]],
+        marker=pricing_shapes[row["pricing_model"]],
         s=100,
-        edgecolor='black',
-        alpha=0.8
+        edgecolor="black",
+        alpha=0.8,
     )
-    # Annotation facultative
-    plt.text(
-        row['total_cost'] + 1,
-        row['co2_kg'],
-        row['instance_id'],
-        fontsize=8,
-        color='black'
-    )
+    plt.text(row["total_cost"] + 1, row["co2_kg"], row["instance_id"], fontsize=8)
 
-plt.title("Analyse Coût vs Émission CO₂ des instances EC2\n(couleur=Région, forme=Pricing Model)",
-          fontsize=14, weight='bold')
-plt.xlabel("Coût total ($)", fontsize=12)
-plt.ylabel("Émission CO₂ (kg)", fontsize=12)
-plt.grid(True, linestyle='--', alpha=0.5)
+plt.title("Coût vs Émission CO₂ (couleur : région, forme : pricing)")
+plt.xlabel("Coût total ($)")
+plt.ylabel("Émission CO₂ (kg)")
+plt.grid(True, linestyle="--", alpha=0.5)
 plt.gca().set_facecolor("#f9f9f9")
 
 # Légendes
 region_handles = [
-    plt.Line2D([0], [0],
-               marker='o', color='w',
-               markerfacecolor=color,
-               markeredgecolor='black',
-               markersize=10, label=region)
-    for region, color in region_color_map.items()
+    plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=c, markeredgecolor="black", markersize=10, label=r)
+    for r, c in region_color_map.items()
 ]
 model_handles = [
-    plt.Line2D([0], [0],
-               marker=pricing_shapes[m], color='w',
-               markerfacecolor='gray',
-               markeredgecolor='black',
-               markersize=10,
-               label=m)
+    plt.Line2D([0], [0], marker=pricing_shapes[m], color="w", markerfacecolor="gray", markeredgecolor="black", markersize=10, label=m)
     for m in pricing_shapes
 ]
+plt.legend(handles=region_handles + model_handles, loc="best")
+plt.xscale("log")
+finalize("plot_cost_vs_co2.png")
 
-legend1 = plt.legend(handles=region_handles, title="Régions", loc="upper left")
-plt.gca().add_artist(legend1)
-plt.legend(handles=model_handles, title="Pricing Model", loc="upper right")
+# ────────────────────────────
+# ░░ 5b. Coût vs Coût carbone (si dispo) ░░
+# ────────────────────────────
 
-# Top 3 instances les plus polluantes
-top_co2 = df.sort_values(by='co2_kg', ascending=False).head(3)
-top_text = "Top CO₂ :\n"
-for _, row_ in top_co2.iterrows():
-    top_text += f"- {row_['instance_id']} : {row_['co2_kg']} kg\n"
-
-plt.text(
-    x=df['total_cost'].max() * 0.60,
-    y=df['co2_kg'].max() * 0.80,
-    s=top_text,
-    fontsize=10,
-    bbox=dict(boxstyle="round,pad=0.5", fc="#f0f0f0", ec="gray", lw=1),
-    ha='left'
-)
-plt.tight_layout()
-plt.xscale('log')  # échelle log si gros écarts
-plt.savefig("plots/plot_cost_vs_co2.png", dpi=300)
-plt.show()
-
-# ------------------------------------------------------------------
-# 🎨 Partie Visualisation 2: Coût vs Coût carbone (si dispo)
-# ------------------------------------------------------------------
-if 'co2_cost' in df.columns:
+if "co2_cost" in df.columns:
     plt.figure(figsize=(12, 7))
     for _, row in df.iterrows():
-        region_color = region_color_map[row['region']]
-        shape = pricing_shapes[row['pricing_model']]
         plt.scatter(
-            row['total_cost'],
-            row['co2_cost'],
-            color=region_color,
-            marker=shape,
+            row["total_cost"],
+            row["co2_cost"],
+            color=region_color_map[row["region"]],
+            marker=pricing_shapes[row["pricing_model"]],
             s=100,
-            edgecolor='black',
-            alpha=0.8
+            edgecolor="black",
+            alpha=0.8,
         )
 
-    plt.title("Analyse Coût vs Coût Carbone (co2_cost) des instances EC2",
-              fontsize=14, weight='bold')
-    plt.xlabel("Coût AWS ($)", fontsize=12)
-    plt.ylabel("Coût Carbone ($)", fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.title("Coût vs Coût Carbone (co2_cost)")
+    plt.xlabel("Coût AWS ($)")
+    plt.ylabel("Coût Carbone ($)")
+    plt.grid(True, linestyle="--", alpha=0.5)
     plt.gca().set_facecolor("#f9f9f9")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.legend(handles=region_handles + model_handles, loc="best")
+    finalize("plot_cost_vs_co2cost.png")
 
-    legend1 = plt.legend(handles=region_handles, title="Régions", loc="upper left")
-    plt.gca().add_artist(legend1)
-    plt.legend(handles=model_handles, title="Pricing Model", loc="upper right")
+# ────────────────────────────
+# ░░ 6. Bar Chart coût moyen vs CO₂ moyen ░░
+# ────────────────────────────
 
-    plt.tight_layout()
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.savefig("plots/plot_cost_vs_co2cost.png", dpi=300)
-    plt.show()
-else:
-    print("\n⚠️ Pas de 'co2_cost' dans le dataset, impossible de tracer le 2ème graphique.")
-
-# ------------------------------------------------------------------
-# 🎨 Partie Visualisation 3: Bar Chart coût moyen vs CO₂ moyen par région
-# ------------------------------------------------------------------
-print("\n== Bar Chart: Coût moyen vs CO₂ moyen par région ==\n")
-region_summary = df.groupby('region', as_index=False).agg({
-    'total_cost': 'mean',
-    'co2_kg': 'mean'
-})
-# Tri par coût (juste pour une lecture plus intuitive)
-region_summary.sort_values(by='total_cost', ascending=False, inplace=True)
+region_summary = df.groupby("region", as_index=False).agg({"total_cost": "mean", "co2_kg": "mean"})
+region_summary.sort_values("total_cost", ascending=False, inplace=True)
 
 fig, ax1 = plt.subplots(figsize=(8, 5))
-x_positions = np.arange(len(region_summary))
-bar_width = 0.4
-
-# Barre pour le coût moyen
-ax1.bar(
-    x_positions - bar_width/2,
-    region_summary['total_cost'],
-    width=bar_width,
-    alpha=0.7,
-    color='blue',
-    label='Coût moyen ($)'
-)
-ax1.set_ylabel("Coût moyen ($)", color='blue')
-ax1.set_ylim(0, region_summary['total_cost'].max() * 1.2)
-ax1.set_xticks(x_positions)
-ax1.set_xticklabels(region_summary['region'], rotation=45)
-
-# Deuxième axe Y pour le CO₂
+positions = np.arange(len(region_summary))
+bar_w = 0.4
+ax1.bar(positions - bar_w / 2, region_summary["total_cost"], width=bar_w, alpha=0.7, label="Coût moyen ($)")
+ax1.set_ylabel("Coût moyen ($)")
 ax2 = ax1.twinx()
-ax2.bar(
-    x_positions + bar_width/2,
-    region_summary['co2_kg'],
-    width=bar_width,
-    alpha=0.7,
-    color='green',
-    label='CO₂ moyen (kg)'
-)
-ax2.set_ylabel("CO₂ moyen (kg)", color='green')
-ax2.set_ylim(0, region_summary['co2_kg'].max() * 1.2)
-
+ax2.bar(positions + bar_w / 2, region_summary["co2_kg"], width=bar_w, alpha=0.7, label="CO₂ moyen (kg)")
+ax2.set_ylabel("CO₂ moyen (kg)")
+ax1.set_xticks(positions)
+ax1.set_xticklabels(region_summary["region"], rotation=45)
 plt.title("Coût moyen vs CO₂ moyen par région")
+ax1.legend(loc="upper left")
+ax2.legend(loc="upper right")
 fig.tight_layout()
+finalize("bar_cost_co2_by_region.png")
 
-lines1, labels1 = ax1.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-ax1.legend(lines1 + lines2, labels1 + labels2, loc='best')
-plt.savefig("plots/bar_cost_co2_by_region.png", dpi=300)
-plt.show()
+# ────────────────────────────
+# ░░ 7. Heatmap (si co2_cost) ░░
+# ────────────────────────────
 
-# ------------------------------------------------------------------
-# 🎨 Partie Visualisation 4: Heatmap co2_cost (si dispo) par (region, pricing_model)
-# ------------------------------------------------------------------
-if 'co2_cost' in df.columns:
-    print("\n== Heatmap co2_cost par (région, pricing_model) ==\n")
-    pivot_co2cost = df.pivot_table(
-        values='co2_cost',
-        index='region',
-        columns='pricing_model',
-        aggfunc='mean'
-    )
-    print(pivot_co2cost)
-
+if "co2_cost" in df.columns:
+    pivot = df.pivot_table(values="co2_cost", index="region", columns="pricing_model", aggfunc="mean")
     plt.figure(figsize=(6, 4))
-    heat_data = pivot_co2cost.values
-    plt.imshow(heat_data, cmap='YlGnBu', aspect='auto')
-    plt.colorbar(label='Coût Carbone moyen ($)')
+    plt.imshow(pivot.values, cmap="YlGnBu", aspect="auto")
+    plt.colorbar(label="Coût carbone moyen ($)")
+    plt.xticks(np.arange(len(pivot.columns)), pivot.columns, rotation=45)
+    plt.yticks(np.arange(len(pivot.index)), pivot.index)
+    plt.title("Heatmap : Coût carbone (region × pricing)")
+    finalize("heatmap_co2_cost.png")
 
-    plt.xticks(np.arange(len(pivot_co2cost.columns)), pivot_co2cost.columns, rotation=45)
-    plt.yticks(np.arange(len(pivot_co2cost.index)), pivot_co2cost.index)
+# ────────────────────────────
+# ░░ 8. Boxplot coût total par région ░░
+# ────────────────────────────
 
-    plt.title("Heatmap Coût Carbone moyen\n(région vs pricing_model)")
-    plt.tight_layout()
-    plt.savefig("plots/heatmap_co2_cost.png", dpi=300)
-    plt.show()
-else:
-    print("\n⚠️ Pas de 'co2_cost' dans le dataset, impossible de tracer la heatmap.")
-
-# ------------------------------------------------------------------
-# 🎨 Partie Visualisation 5: Boxplot coût total par région
-# ------------------------------------------------------------------
-print("\n== Boxplot: Distribution du coût total par région ==\n")
-
-regions_ordered = df['region'].unique().tolist()  # ordre brut (ou trié si besoin)
-data_by_region = [df[df['region'] == reg]['total_cost'] for reg in regions_ordered]
-
+regions_order = df["region"].unique().tolist()
 plt.figure(figsize=(8, 5))
-#Ne met pas tick_labels
-plt.boxplot(data_by_region, labels=regions_ordered, patch_artist=True)
-
-plt.title("Distribution du Coût total par région (Boxplot)", fontsize=12)
+plt.boxplot([df[df["region"] == r]["total_cost"] for r in regions_order], labels=regions_order, patch_artist=True)
+plt.title("Distribution du Coût total par région")
 plt.xlabel("Région")
 plt.ylabel("Coût total ($)")
-plt.grid(axis='y', linestyle='--', alpha=0.5)
-plt.savefig("plots/boxplot_cost_by_region.png", dpi=300)
-plt.show()
+plt.grid(axis="y", linestyle="--", alpha=0.5)
+finalize("boxplot_cost_by_region.png")
+
+print("\n✅ Analyse terminée !")
