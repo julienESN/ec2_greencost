@@ -1,12 +1,29 @@
-# Ignorer le dossier data
-data/
+# Environnements virtuels
+.env/
+.venv/
+venv/
 
-# Ignorer le dossier plots
-plots/
+# Cache Python
+__pycache__/
+*.py[cod]
 
-# Ignorer le dossier .idea/ (PyCharm)
+# Build & dist
+build/
+dist/
+*.egg-info/
+
+# Couverture et tests
+coverage.xml
+.coverage      #  ← oui, ignore le fichier binaire sqlite
+htmlcov/
+.pytest_cache/
+
+# IDE / outils
 .idea/
+.vscode/
+*.swp
 
-# Ignorer d'autres fichiers sensibles
-*.log
-*.pyc
+# Données ou plots générés
+plots/
+data/
+*.png
