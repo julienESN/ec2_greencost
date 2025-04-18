@@ -8,6 +8,8 @@ Améliorations (Issue #5)
 - **Mode d’affichage sélectionnable** : `--layout unified` (par défaut) ou `--layout separate` pour revenir au comportement précédent.
 - **Lisibilité** : styles cohérents, titres clairs, tailles de police homogènes, légende compacte.
 """
+
+
 from __future__ import annotations
 
 import argparse
@@ -42,7 +44,7 @@ args = parser.parse_args()
 # Interaction en mode CLI simple (aucun argument fourni)
 ###############################################################################
 interactive = len(sys.argv) == 1 and sys.stdin.isatty()
-if interactive:
+if interactive: # pragma: no cover
     args.input = Path(input("CSV à analyser [data/simulated_ec2.csv]: ").strip() or "data/simulated_ec2.csv")
     args.outdir = Path(input("Dossier des graphes [plots]: ").strip() or "plots")
     ans_layout = input("Disposition unifiée (u) ou séparée (s) ? [u]: ").strip().lower()
@@ -50,8 +52,8 @@ if interactive:
     ans_display = input("Afficher les graphiques ? [O/n]: ").strip().lower()
     args.no_display = ans_display == "n"
 else:
-    args.input = args.input or Path("../data/simulated_ec2.csv")
-    args.outdir = args.outdir or Path("../plots")
+    args.input = args.input or Path("../../data/simulated_ec2.csv")
+    args.outdir = args.outdir or Path("../../plots")
 
 ###############################################################################
 # Backend Matplotlib

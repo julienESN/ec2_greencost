@@ -48,7 +48,7 @@ BASE_POWER_MAP: dict[str, int] = {
 }
 
 
-def _ask_positive_int(prompt: str, default: int) -> int:
+def _ask_positive_int(prompt: str, default: int) -> int: # pragma: no cover
     while True:
         raw = input(f"{prompt} [{default}]: ").strip()
         if not raw:
@@ -58,12 +58,12 @@ def _ask_positive_int(prompt: str, default: int) -> int:
         print("❌ Merci d’entrer un entier positif.")
 
 
-def _ask_path(prompt: str, default: Path) -> Path:
+def _ask_path(prompt: str, default: Path) -> Path: # pragma: no cover
     raw = input(f"{prompt} [{default}]: ").strip()
     return Path(raw) if raw else default
 
 
-def _ask_float(prompt: str, default: float) -> float:
+def _ask_float(prompt: str, default: float) -> float: # pragma: no cover
     while True:
         raw = input(f"{prompt} [{default}]: ").replace(",", ".").strip()
         if not raw:
@@ -132,18 +132,18 @@ def _cli_parser() -> argparse.ArgumentParser:
     return p
 
 
-def main() -> None:
+def main() -> None: # pragma: no cover
     args = _cli_parser().parse_args()
     interactive = len(sys.argv) == 1 and sys.stdin.isatty()
 
     if interactive:
         print("=== Mode interactif ===")
         num_instances = _ask_positive_int("Nombre d’instances", 50)
-        output_csv = _ask_path("CSV de sortie", Path("../data/simulated_ec2.csv"))
+        output_csv = _ask_path("CSV de sortie", Path("../../data/simulated_ec2.csv"))
         co2_price = _ask_float("Prix du CO₂ en $/kg", 0.08)
     else:
         num_instances = args.num_instances or 50
-        output_csv = args.output or Path("../data/simulated_ec2.csv")
+        output_csv = args.output or Path("../../data/simulated_ec2.csv")
         co2_price = args.co2_price if args.co2_price is not None else 0.08
 
     data = generate_instances(num_instances, co2_price)
